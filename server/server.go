@@ -21,10 +21,17 @@ type Server struct {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.Router.HandleFunc("/_healthcheck", s.handleHealthCheck())
 	s.Router.HandleFunc("/", s.handleView()).Methods(http.MethodGet)
 	s.Router.HandleFunc("/", s.handleSave()).Methods(http.MethodPost)
 
 	s.Router.ServeHTTP(w, r)
+}
+
+func (s *Server) handleHealthCheck() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func (s *Server) handleView() http.HandlerFunc {
