@@ -6,8 +6,8 @@ The "vote" service forwards requests to the ["api"](https://github.com/copilot-e
 and retrieve results on whether a voter prefers cats or dogs.
 
 The two services communicate through Service Discovery which AWS Copilot sets up by default by querying the `api.voting-app.local:8080` endpoint.  
-Alternatively, you can use the environment variable that Copilot injects by default to your service:
-https://github.com/copilot-example-voting-app/vote/blob/6b4a2dab38229b89e84d1aca6081a0577e9be167/server/server.go#L122
+Alternatively, you can use the [`COPILOT_SERVICE_DISCOVERY_ENDPOINT` environment variable](https://github.com/copilot-example-voting-app/vote/blob/6b4a2dab38229b89e84d1aca6081a0577e9be167/server/server.go#L122) 
+that Copilot injects by default to your service.
 
 ## How to create this service?
 1. Install the AWS Copilot CLI [https://aws.github.io/copilot-cli/](https://aws.github.io/copilot-cli/)
