@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cats vs. Dogs!</title>
+        <style>
+            .container {
+                display: block;
+                margin: 0 auto;
+                width: 500px;
+                text-align: center;
+            }
+            h3 {
+                font-family: Sohne, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Ubuntu, sans-serif;
+                font-size: 30px;
+                font-weight: 700;
+                line-height: 34px;
+                margin-bottom: 10px;
+            }
+
+            .btn {
+                border-radius: 6px;
+                padding: 12px 24px;
+                cursor: pointer;
+                position: relative;
+                font-weight: 600;
+                letter-spacing: normal;
+                line-height: 24px;
+                white-space: nowrap;
+                border: 1px solid rgb(81, 94, 189);
+                font-size: 16px;
+                transition: transform 400ms ease 0s;
+                width: 400px;
+                color: black;
+                margin-bottom: 5px;
+            }
+            .btn:hover {
+                background: rgb(195, 201, 241) none repeat scroll 0% 0%;
+            }
+            .selected {
+                background: rgb(104, 117, 217) none repeat scroll 0% 0%;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h3>Cats vs. Dogs!</h3>
+            <form id="choice" name='form' method="POST" action="/">
+                <button id="cat-btn" type="submit" name="vote" class="btn {{if eq .Vote "cat"}}selected{{end}}" value="cat">🐱 Cat</button>
+                <button id="dog-btn" type="submit" name="vote" class="btn {{if eq .Vote "dog"}}selected{{end}}" value="dog">🐶 Dog</button>
+            </form>
+        </div>
+    </body>
+</html>
