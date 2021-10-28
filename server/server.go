@@ -42,7 +42,7 @@ func NewServer() (*Server, error) {
 		TopicARN string `json:"events"`
 	}{}
 	if err := json.Unmarshal([]byte(snsTopicARNEnvVal), &topic); err != nil {
-		return nil, fmt.Errorf("unmarshal topic ARN: %v", err)
+		return nil, fmt.Errorf("unmarshal topic ARN: %w", err)
 	}
 	return &Server{
 		Router:    mux.NewRouter(),
@@ -146,7 +146,7 @@ func getVote(voterID string) (string, error) {
 	endpoint := fmt.Sprintf("http://api.%s:8080/votes/%s", os.Getenv("COPILOT_SERVICE_DISCOVERY_ENDPOINT"), voterID)
 	resp, err := http.Get(endpoint)
 	if err != nil {
-		log.Printf("WARN: server: coudln't get vote for voter id %s: %v\n", voterID, err)
+		log.Printf("WARN: server: couldn't get vote for voter id %s: %v\n", voterID, err)
 		return "", nil
 	}
 	if resp.StatusCode != http.StatusOK {
