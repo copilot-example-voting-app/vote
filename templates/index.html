@@ -17,6 +17,7 @@
                 margin-bottom: 10px;
             }
 
+
             .btn {
                 border-radius: 6px;
                 padding: 12px 24px;
@@ -40,11 +41,18 @@
                 background: rgb(104, 117, 217) none repeat scroll 0% 0%;
                 color: white;
             }
+            .introduction:hover {
+                border-bottom: 1px dotted #000;
+                text-decoration: none;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h3>Cats 🐱 vs. 🐶 Dogs!</h3>
+            <h3><span class="introduction" title="They are said to have come from outer space.">Cats 🐱</span>
+                vs.
+                <span class="introduction" title="They are human's best friends.">🐶 Dogs</span>
+                !</h3>
             <form id="choice" name='form' method="POST" action="/">
                 {{if eq .Vote "cat"}}
                 <button id="cat-btn" type="submit" name="vote" class="btn selected" value="cat">🐱😏 Smirky Cat </button>
