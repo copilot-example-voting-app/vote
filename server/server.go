@@ -25,6 +25,7 @@ const (
 type Server struct {
 	Router    *mux.Router
 	SNSClient *sns.SNS
+	TopicARN  string
 }
 
 // NewServer inits a new Server struct.
@@ -33,9 +34,20 @@ func NewServer() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	snsTopicARNEnvVal, exist := os.LookupEnv(snsTopicARNEnvName)
+	if !exist {
+		return nil, fmt.Errorf(`environment variable "%s" is not set`, snsTopicARNEnvName)
+	}
+	topic := struct {
+		TopicARN string `json:"events"`
+	}{}
+	if err := json.Unmarshal([]byte(snsTopicARNEnvVal), &topic); err != nil {
+		return nil, fmt.Errorf("unmarshal topic ARN: %v", err)
+	}
 	return &Server{
 		Router:    mux.NewRouter(),
 		SNSClient: sns.New(sess),
+		TopicARN:  topic.TopicARN,
 	}, nil
 }
 
@@ -97,13 +109,9 @@ func (s *Server) saveVote(voterID, vote string) error {
 		log.Printf("ERROR: server encode save vote data: %v\n", err)
 		return fmt.Errorf("server: encode save vote data: %v", err)
 	}
-	snsARN, exist := os.LookupEnv(snsTopicARNEnvName)
-	if !exist {
-		return fmt.Errorf(`environment variable "%s" is not set`, snsTopicARNEnvName)
-	}
 	_, err = s.SNSClient.Publish(&sns.PublishInput{
 		Message:  aws.String(string(dat)),
-		TopicArn: aws.String(snsARN),
+		TopicArn: aws.String(s.TopicARN),
 	})
 	if err != nil {
 		log.Printf("ERROR: server: save vote %s for voter id %s: %v\n", vote, voterID, err)
