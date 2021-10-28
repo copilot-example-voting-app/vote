@@ -46,8 +46,16 @@
         <div class="container">
             <h3>Cats 🐱 vs. 🐶 Dogs!</h3>
             <form id="choice" name='form' method="POST" action="/">
-                <button id="cat-btn" type="submit" name="vote" class="btn {{if eq .Vote "cat"}}selected{{end}}" value="cat">🐱 Cat</button>
-                <button id="dog-btn" type="submit" name="vote" class="btn {{if eq .Vote "dog"}}selected{{end}}" value="dog">🐶 Dog</button>
+                {{if eq .Vote "cat"}}
+                <button id="cat-btn" type="submit" name="vote" class="btn selected" value="cat">🐱😏 Smirky Cat </button>
+                <button id="dog-btn" type="submit" name="vote" class="btn" value="dog">🐶😢 Crying Doggo</button>
+                {{else if eq .Vote "dog"}}
+                <button id="cat-btn" type="submit" name="vote" class="btn" value="cat">🐱😢 Crying Kitty</button>
+                <button id="dog-btn" type="submit" name="vote" class="btn selected" value="dog">🐶😏 Smirky Dog</button>
+                {{else}}
+                <button id="cat-btn" type="submit" name="vote" class="btn" value="cat">🐱 Cat</button>
+                <button id="dog-btn" type="submit" name="vote" class="btn" value="dog">🐶 Dog</button>
+                {{end}}
             </form>
         </div>
     </body>
