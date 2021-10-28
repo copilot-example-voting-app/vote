@@ -2,7 +2,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,13 +10,33 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/copilot-example-voting-app/vote/sessions"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
+const (
+	snsTopicARNEnvName = "COPILOT_SNS_TOPIC_ARNS"
+)
+
 // Server is the Vote server.
 type Server struct {
-	Router *mux.Router
+	Router    *mux.Router
+	SNSClient *sns.SNS
+}
+
+// NewServer inits a new Server struct.
+func NewServer() (*Server, error) {
+	sess, err := sessions.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	return &Server{
+		Router:    mux.NewRouter(),
+		SNSClient: sns.New(sess),
+	}, nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -58,12 +77,40 @@ func (s *Server) handleSave() http.HandlerFunc {
 			return
 		}
 		vote := r.FormValue("vote")
-		if err := saveVote(voterID, vote); err != nil {
+		if err := s.saveVote(voterID, vote); err != nil {
 			http.Error(w, "save vote", http.StatusInternalServerError)
 			return
 		}
 		renderTemplate(w, "index", vote)
 	}
+}
+
+func (s *Server) saveVote(voterID, vote string) error {
+	dat, err := json.Marshal(&struct {
+		VoterID string `json:"voter_id"`
+		Vote    string `json:"vote"`
+	}{
+		VoterID: voterID,
+		Vote:    vote,
+	})
+	if err != nil {
+		log.Printf("ERROR: server encode save vote data: %v\n", err)
+		return fmt.Errorf("server: encode save vote data: %v", err)
+	}
+	snsARN, exist := os.LookupEnv(snsTopicARNEnvName)
+	if !exist {
+		return fmt.Errorf(`environment variable "%s" is not set`, snsTopicARNEnvName)
+	}
+	_, err = s.SNSClient.Publish(&sns.PublishInput{
+		Message:  aws.String(string(dat)),
+		TopicArn: aws.String(snsARN),
+	})
+	if err != nil {
+		log.Printf("ERROR: server: save vote %s for voter id %s: %v\n", vote, voterID, err)
+		return fmt.Errorf("server: save vote: %v", err)
+	}
+	log.Printf("INFO: server: saved vote %s for voter id %s\n", vote, voterID)
+	return nil
 }
 
 // getVoterID reads the voter_id cookie.
@@ -99,7 +146,6 @@ func getVote(voterID string) (string, error) {
 		return "", nil
 	}
 
-
 	defer resp.Body.Close()
 	data := struct {
 		Result string `json:"vote"`
@@ -107,43 +153,20 @@ func getVote(voterID string) (string, error) {
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&data); err != nil {
 		log.Printf("ERROR: server: decode vote data: %v\n", err)
-		return "", fmt.Errorf("server: decode vote: %v",err)
+		return "", fmt.Errorf("server: decode vote: %v", err)
 	}
 	log.Printf("INFO: server: received vote %s for voter id %s\n", data.Result, voterID)
 	return data.Result, nil
 }
 
-func saveVote(voterID, vote string) error {
-	dat, err := json.Marshal(&struct{
-		VoterID string `json:"voter_id"`
-		Vote string `json:"vote"`
-	}{
-		VoterID: voterID,
-		Vote:    vote,
-	})
-	if err != nil {
-		log.Printf("ERROR: server encode save vote data: %v\n", err)
-		return fmt.Errorf("server: encode save vote data: %v", err)
-	}
-
-	endpoint := fmt.Sprintf("http://api.%s:8080/votes", os.Getenv("COPILOT_SERVICE_DISCOVERY_ENDPOINT"))
-	_, err = http.Post(endpoint, "application/json", bytes.NewBuffer(dat))
-	if err != nil {
-		log.Printf("ERROR: server: save vote %s for voter id %s: %v\n", vote, voterID, err)
-		return fmt.Errorf("server: save vote: %v", err)
-	}
-	log.Printf("INFO: server: saved vote %s for voter id %s\n", vote, voterID)
-	return nil
-}
-
 func renderTemplate(w http.ResponseWriter, tmpl string, vote string) {
-	t, err := template.ParseFiles(filepath.Join("templates", tmpl + ".html"))
+	t, err := template.ParseFiles(filepath.Join("templates", tmpl+".html"))
 	if err != nil {
 		log.Fatalf("parse file: %v\n", err)
 	}
 	t.Execute(w, struct {
 		Vote string
-	} {
+	}{
 		Vote: vote,
 	})
 }
